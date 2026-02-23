@@ -22,7 +22,7 @@
         <Single Name="Implementation" Type="{3b83b776-fb25-43b8-99f2-3c507c9143fc}" Method="IArchivable">
           <Single Name="TextDocument" Type="{f3878285-8e4f-490b-bb1b-9acbb7eb04db}" Method="IArchivable">
             <Single Name="TextBlobForSerialisation" Type="string">// ---------------------------------------------------------
-// 1. INITIALIZATION (Run once to fix Column Capacities 1-5)
+// 1. INITIALIZATION 
 // ---------------------------------------------------------
 IF GVL_Warehouse.arrWarehouse[1, 5].iMaxCapacity &lt;&gt; 5 THEN
     FOR i := 1 TO 5 DO
@@ -110,7 +110,7 @@ CASE iState OF
         END_IF
 
         // 2. Move (Proportional Speed)
-        // This moves 20% of the remaining distance per cycle. Fast start, soft landing.
+        // This moves 20% of the remaining distance per cycle.
         GVL_Warehouse.rCraneX_Actual := GVL_Warehouse.rCraneX_Actual + (GVL_Warehouse.rTargetX - GVL_Warehouse.rCraneX_Actual) * 0.2;
         GVL_Warehouse.rCraneY_Actual := GVL_Warehouse.rCraneY_Actual + (GVL_Warehouse.rTargetY - GVL_Warehouse.rCraneY_Actual) * 0.2;
 
@@ -199,3 +199,4 @@ END_VAR
   <Single Name="ProfileName" Type="string">CODESYS V3.5 SP21 Patch 4</Single>
 </Single>  </StructuredView>
 </ExportFile>
+
