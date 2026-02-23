@@ -1,0 +1,201 @@
+<ExportFile>
+  <StructuredView Guid="{d9b2b2cc-ea99-4c3b-aa42-1e5c49e65b84}">
+<Single xml:space="preserve" Type="{3daac5e4-660e-42e4-9cea-3711b98bfb63}" Method="IArchivable">
+  <Null Name="Profile" />
+  <List2 Name="EntryList">
+    <Single Type="{6198ad31-4b98-445c-927f-3258a0e82fe3}" Method="IArchivable">
+      <Single Name="IsRoot" Type="bool">True</Single>
+      <Single Name="MetaObject" Type="{81297157-7ec9-45ce-845e-84cab2b88ade}" Method="IArchivable">
+        <Single Name="Guid" Type="System.Guid">0dd97068-dfc6-4853-be26-b5e16f7b96d9</Single>
+        <Single Name="ParentGuid" Type="System.Guid">06e17a2c-5c40-4f51-a1b7-a80c39fa4d04</Single>
+        <Single Name="Name" Type="string">PLC_PRG</Single>
+        <Dictionary Type="{2c41fa04-1834-41c1-816e-303c7aa2c05b}" Name="Properties" />
+        <Single Name="TypeGuid" Type="System.Guid">6f9dac99-8de1-4efc-8465-68ac443b7d08</Single>
+        <Array Name="EmbeddedTypeGuids" Type="System.Guid">
+          <Single Type="System.Guid">a9ed5b7e-75c5-4651-af16-d2c27e98cb94</Single>
+          <Single Type="System.Guid">3b83b776-fb25-43b8-99f2-3c507c9143fc</Single>
+        </Array>
+        <Single Name="Timestamp" Type="long">639068854129534060</Single>
+      </Single>
+      <Single Name="Object" Type="{6f9dac99-8de1-4efc-8465-68ac443b7d08}" Method="IArchivable">
+        <Single Name="SpecialFunc" Type="{0db3d7bb-cde0-4416-9a7b-ce49a0124323}">None</Single>
+        <Single Name="Implementation" Type="{3b83b776-fb25-43b8-99f2-3c507c9143fc}" Method="IArchivable">
+          <Single Name="TextDocument" Type="{f3878285-8e4f-490b-bb1b-9acbb7eb04db}" Method="IArchivable">
+            <Single Name="TextBlobForSerialisation" Type="string">// ---------------------------------------------------------
+// 1. INITIALIZATION (Run once to fix Column Capacities 1-5)
+// ---------------------------------------------------------
+IF GVL_Warehouse.arrWarehouse[1, 5].iMaxCapacity &lt;&gt; 5 THEN
+    FOR i := 1 TO 5 DO
+        FOR j := 1 TO 5 DO
+             // Set Capacity: Col 1=1, Col 5=5
+             GVL_Warehouse.arrWarehouse[i, j].iMaxCapacity := j; 
+             
+             // Reset everything else
+             GVL_Warehouse.arrWarehouse[i, j].iCurrentCount := 0;
+             GVL_Warehouse.arrWarehouse[i, j].dwColor := 16#FF00FF00; 
+             GVL_Warehouse.arrWarehouse[i, j].sItemName := CONCAT('0 / ', INT_TO_STRING(j));
+        END_FOR;
+    END_FOR;
+    iState := 0; // Ready to start
+END_IF
+
+// ---------------------------------------------------------
+// 2. MAIN LOGIC
+// ---------------------------------------------------------
+CASE iState OF
+    0: // IDLE (Handles both Auto and Manual inputs)
+        // --- PATH A: AUTO ---
+        IF GVL_Warehouse.xExecute THEN 
+            GVL_Warehouse.xExecute := FALSE;
+            GVL_Warehouse.iIncomingType := DWORD_TO_INT(TIME_TO_DWORD(TIME()) MOD 5) + 1;
+            GVL_Warehouse.iTargetRow := GVL_Warehouse.iIncomingType;
+            iState := 5; // Go to Search
+        
+        // --- PATH B: MANUAL ---
+        ELSIF GVL_Warehouse.xManualExecute THEN 
+            GVL_Warehouse.xManualExecute := FALSE;
+            GVL_Warehouse.iIncomingType := GVL_Warehouse.iTargetRow; 
+            iState := 6; // Go to Verify
+        END_IF
+
+        // Common Setup (Visuals)
+        IF iState &gt; 0 THEN
+            CASE GVL_Warehouse.iIncomingType OF
+                1: GVL_Warehouse.sIncomingName := 'Alpha';
+                2: GVL_Warehouse.sIncomingName := 'Bravo';
+                3: GVL_Warehouse.sIncomingName := 'Charlie';
+                4: GVL_Warehouse.sIncomingName := 'Delta';
+                5: GVL_Warehouse.sIncomingName := 'Echo';
+                ELSE GVL_Warehouse.sIncomingName := 'Custom';
+            END_CASE
+            
+            GVL_Warehouse.xBoxReady := TRUE;
+            GVL_Warehouse.rActiveBoxX := GVL_Warehouse.rPickX;
+            GVL_Warehouse.rActiveBoxY := GVL_Warehouse.rPickY;
+            GVL_Warehouse.xCarrying := FALSE;
+        END_IF
+
+    5: // AUTO SEARCH (Find first empty column)
+        GVL_Warehouse.iTargetCol := 0;
+        FOR i := 1 TO 5 DO
+            IF GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, i].iCurrentCount &lt; GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, i].iMaxCapacity THEN
+                GVL_Warehouse.iTargetCol := i;
+                EXIT;
+            END_IF;
+        END_FOR;
+        
+        IF GVL_Warehouse.iTargetCol &gt; 0 THEN iState := 10;
+        ELSE GVL_Warehouse.xSystemFull := TRUE; iState := 0; END_IF
+
+    6: // MANUAL VERIFY (Check if slot is valid)
+        IF (GVL_Warehouse.iTargetRow &lt; 1 OR GVL_Warehouse.iTargetRow &gt; 5 OR GVL_Warehouse.iTargetCol &lt; 1 OR GVL_Warehouse.iTargetCol &gt; 5) OR
+           (GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iCurrentCount &gt;= GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iMaxCapacity) THEN
+            GVL_Warehouse.xSystemFull := TRUE;
+            iState := 0;
+        ELSE
+            iState := 10;
+        END_IF
+
+    10, 20, 40: // MOVEMENT ENGINE (Fast &amp; Smooth)
+        // 1. Set Targets
+        IF iState = 10 THEN // To Dock
+            GVL_Warehouse.rTargetX := GVL_Warehouse.rPickX;
+            GVL_Warehouse.rTargetY := GVL_Warehouse.rPickY;
+        ELSIF iState = 20 THEN // To Shelf
+            GVL_Warehouse.rTargetX := (INT_TO_REAL(GVL_Warehouse.iTargetCol - 1) * 80.0) + 149.0;
+            GVL_Warehouse.rTargetY := (INT_TO_REAL(GVL_Warehouse.iTargetRow - 1) * 60.0) + 135.0;
+        ELSE // To Home
+            GVL_Warehouse.rTargetX := GVL_Warehouse.rHomeX;
+            GVL_Warehouse.rTargetY := GVL_Warehouse.rHomeY;
+        END_IF
+
+        // 2. Move (Proportional Speed)
+        // This moves 20% of the remaining distance per cycle. Fast start, soft landing.
+        GVL_Warehouse.rCraneX_Actual := GVL_Warehouse.rCraneX_Actual + (GVL_Warehouse.rTargetX - GVL_Warehouse.rCraneX_Actual) * 0.2;
+        GVL_Warehouse.rCraneY_Actual := GVL_Warehouse.rCraneY_Actual + (GVL_Warehouse.rTargetY - GVL_Warehouse.rCraneY_Actual) * 0.2;
+
+        // 3. Snap to Grid (Stop micro-decimals)
+        IF ABS(GVL_Warehouse.rCraneX_Actual - GVL_Warehouse.rTargetX) &lt; 1.0 THEN GVL_Warehouse.rCraneX_Actual := GVL_Warehouse.rTargetX; END_IF
+        IF ABS(GVL_Warehouse.rCraneY_Actual - GVL_Warehouse.rTargetY) &lt; 1.0 THEN GVL_Warehouse.rCraneY_Actual := GVL_Warehouse.rTargetY; END_IF
+
+        // 4. Animation Sync
+        IF iState = 20 THEN 
+            GVL_Warehouse.rActiveBoxX := GVL_Warehouse.rCraneX_Actual;
+            GVL_Warehouse.rActiveBoxY := GVL_Warehouse.rCraneY_Actual;
+        END_IF
+
+        // 5. Arrival Check
+        IF GVL_Warehouse.rCraneX_Actual = GVL_Warehouse.rTargetX AND GVL_Warehouse.rCraneY_Actual = GVL_Warehouse.rTargetY THEN
+            IF iState = 10 THEN
+                GVL_Warehouse.xCarrying := TRUE;
+                GVL_Warehouse.xBoxReady := FALSE;
+                iState := 20;
+            ELSIF iState = 20 THEN iState := 30;
+            ELSE iState := 0; END_IF
+        END_IF
+
+    30: // UPDATE DATA
+        // Increment Count
+        GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iCurrentCount := GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iCurrentCount + 1;
+        
+        // Update Text
+        GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].sItemName := 
+        CONCAT(CONCAT(INT_TO_STRING(GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iCurrentCount), ' / '), INT_TO_STRING(GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iMaxCapacity));
+        
+        // Update Color
+        IF GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iMaxCapacity &gt; 0 THEN
+            rPercent := INT_TO_REAL(GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iCurrentCount) / INT_TO_REAL(GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].iMaxCapacity);
+        ELSE rPercent := 1.0; END_IF
+        
+        GVL_Warehouse.arrWarehouse[GVL_Warehouse.iTargetRow, GVL_Warehouse.iTargetCol].dwColor := SHL(DWORD#16#FF, 24) OR SHL(REAL_TO_DWORD(255.0 * rPercent), 16) OR SHL(REAL_TO_DWORD(255.0 * (1.0 - rPercent)), 8);
+        
+        GVL_Warehouse.xCarrying := FALSE;
+        iState := 40;
+END_CASE
+fbErrorTimer(IN := GVL_Warehouse.xSystemFull, PT := T#2S);
+
+// 2. If the timer finishes (2 seconds passed), turn off cell full warning
+IF fbErrorTimer.Q THEN
+    GVL_Warehouse.xSystemFull := FALSE;
+END_IF</Single>
+            <Single Name="LineInfoPersistence" Type="string">0dd97068-dfc6-4853-be26-b5e16f7b96d9_Impl_LineIds</Single>
+          </Single>
+        </Single>
+        <Single Name="Interface" Type="{a9ed5b7e-75c5-4651-af16-d2c27e98cb94}" Method="IArchivable">
+          <Single Name="TextDocument" Type="{f3878285-8e4f-490b-bb1b-9acbb7eb04db}" Method="IArchivable">
+            <Single Name="TextBlobForSerialisation" Type="string">PROGRAM PLC_PRG
+VAR
+    iState   : INT := 0;
+    rTargetX : REAL;
+    rTargetY : REAL;
+    rSpeed   : REAL := 1.0;
+	i : INT;
+	j : INT; 
+	rPercent : REAL;
+    byRed : BYTE;
+    byGreen : BYTE;
+	sCount : STRING;
+    sMax : STRING;
+	fbErrorTimer : TON;
+END_VAR
+</Single>
+            <Single Name="LineInfoPersistence" Type="string">0dd97068-dfc6-4853-be26-b5e16f7b96d9_Decl_LineIds</Single>
+          </Single>
+        </Single>
+        <Single Name="UniqueIdGenerator" Type="string">1897</Single>
+        <Single Name="POULevel" Type="{8e575c5b-1d37-49c6-941b-5c0ec7874787}">Standard</Single>
+        <List Name="ChildObjectGuids" Type="System.Collections.ArrayList" />
+        <Single Name="AddAttributeSubsequent" Type="bool">False</Single>
+      </Single>
+      <Single Name="ParentSVNodeGuid" Type="System.Guid">06e17a2c-5c40-4f51-a1b7-a80c39fa4d04</Single>
+      <Array Name="Path" Type="string">
+        <Single Type="string">Device</Single>
+        <Single Type="string">PLC Logic</Single>
+        <Single Type="string">Application</Single>
+      </Array>
+      <Single Name="Index" Type="int">-1</Single>
+    </Single>
+  </List2>
+  <Single Name="ProfileName" Type="string">CODESYS V3.5 SP21 Patch 4</Single>
+</Single>  </StructuredView>
+</ExportFile>
