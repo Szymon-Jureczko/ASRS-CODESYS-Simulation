@@ -2,7 +2,7 @@
 
 A complete PLC program and HMI visualization for an automated warehouse crane, built entirely in CODESYS using Structured Text (ST). 
 
-This project simulates a smart 3-axis gripper system that automatically sorts and stores incoming items into a dynamically managed 5x5 grid warehouse. It was designed to showcase high-performance logic-to-HMI synchronization, decoupled task management, and closed-loop motion simulation.
+This project simulates a smart 2-axis gripper system that automatically sorts and stores incoming items into a dynamically managed 5x5 grid warehouse. It was designed to showcase high-performance logic-to-HMI synchronization, decoupled task management, and closed-loop motion simulation.
 
 ## Key Engineering Features
 
@@ -29,4 +29,4 @@ This project simulates a smart 3-axis gripper system that automatically sorts an
 6. Open the `TargetVisu` tab or navigate to `http://localhost:8080/webvisu.htm` to interact with the HMI.
 
 ## Author
-Szymon Jureczko Automation Engineering Student  
+Szymon Jureczko Automation and Robotics Engineering Student  
