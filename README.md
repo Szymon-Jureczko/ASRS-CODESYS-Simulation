@@ -2,9 +2,10 @@
 
 A complete PLC program and HMI visualization for an automated warehouse crane, built entirely in CODESYS using Structured Text (ST). 
 
-This project simulates a smart 2-axis gripper system that automatically sorts and stores incoming items into a dynamically managed 5x5 grid warehouse. It was designed to showcase high-performance logic-to-HMI synchronization, decoupled task management, and closed-loop motion simulation.
-
-## Key Engineering Features
+This project simulates a smart 2-axis gripper system that automatically sorts and stores incoming items into a dynamically managed 5x5 grid warehouse. It was designed to showca!
+se high-performance logic-to-HMI synchronization, decoupled task management, and closed-loop motion simulation.
+[2026-02-23 19-20-47(1)](https://github.com/user-attachments/assets/ae5a648d-2d01-412e-b2a6-270b34c084e0)
+## Key Features
 
 * **Proportional Motion Control (P-Control):** Replaced basic linear movement with an exponential "ease-out" algorithm `(Current := Current + (Target - Current) * 0.2)`. This allows the crane to move at high velocities while landing smoothly, eliminating visual jitter and simulating real-world physical inertia.
 * **Decoupled Task Architecture:** Optimized CPU load by separating the physics/math calculations (`MainTask` at 20ms) from the UI rendering (`VISU_TASK` at 50ms) while utilizing client-side animation interpolation.
