@@ -29,4 +29,4 @@ This project simulates a smart 2-axis gripper system that automatically sorts an
 6. Open the `TargetVisu` tab or navigate to `http://localhost:8080/webvisu.htm` to interact with the HMI.
 
 ## Author
-Szymon Jureczko Automation and Robotics Engineering Student  
+Szymon Jureczko
