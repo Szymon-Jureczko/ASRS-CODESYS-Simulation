@@ -1,5 +1,7 @@
 # Automated Storage and Retrieval System (ASRS) Simulation
 
+![CODESYS](https://img.shields.io/badge/CODESYS-V3.5-blue) ![Structured Text](https://img.shields.io/badge/Structured%20Text-ST-orange) ![IEC 61131-3](https://img.shields.io/badge/IEC%2061131--3-ST-blueviolet) ![HMI](https://img.shields.io/badge/HMI-WebVisu-teal) ![License](https://img.shields.io/badge/License-MIT-brightgreen)
+
 A complete PLC program and HMI visualization for an automated warehouse crane, built entirely in CODESYS using Structured Text (ST). 
 
 This project simulates a smart 2-axis gripper system that automatically sorts and stores incoming items into a dynamically managed 5x5 grid warehouse. It was designed to showcase high-performance logic-to-HMI synchronization, decoupled task management, and closed-loop motion simulation.
